@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "PRIO-Now CEA: Cost-effectiveness model of two-staged CAC-guided statin screening in Sweden"
+abstract: >-
+  R/heemod Markov cohort model evaluating the cost-effectiveness of a
+  two-staged coronary artery calcium (CAC)-guided statin screening strategy
+  (PRIO-Now) versus standard of care in a Swedish population of 60-year-olds.
+authors:
+  - family-names: Svensson
+    given-names: Mikael
+type: software
+license: MIT
+repository-code: "https://github.com/mikasven80/cea-prionu"
+keywords:
+  - cost-effectiveness analysis
+  - Markov model
+  - coronary artery calcium
+  - statin
+  - cardiovascular prevention
+  - health economics

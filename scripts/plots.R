@@ -1,6 +1,11 @@
 plot_ce_plane <- function(psa_res, wtp = 500000, level = 0.95, n_ellipse = 200,
-                          ell_lab_offset = 0.015) {
-  
+                          ell_lab_offset = 0.015, fx = 10.8, currency = "EUR") {
+
+  # Convert incremental costs and WTP to display currency (model is in SEK)
+  psa_res <- psa_res
+  psa_res$inc_cost <- psa_res$inc_cost / fx
+  wtp <- wtp / fx
+
   # Symmetric limits to show all quadrants
   x_max <- max(abs(psa_res$inc_qaly), na.rm = TRUE)
   y_max <- max(abs(psa_res$inc_cost), na.rm = TRUE)
@@ -35,7 +40,7 @@ plot_ce_plane <- function(psa_res, wtp = 500000, level = 0.95, n_ellipse = 200,
   wtp_label <- paste0(
     "Cost-Effectiveness Threshold\n(",
     formatC(wtp, format = "f", big.mark = ",", digits = 0),
-    " SEK per QALY)"
+    " ", currency, " per QALY)"
   )
   
   # Ellipse label positioning (tune ell_lab_offset)
@@ -96,7 +101,7 @@ plot_ce_plane <- function(psa_res, wtp = 500000, level = 0.95, n_ellipse = 200,
     
     labs(
       x = "Incremental QALYs (Intervention − SoC)",
-      y = "Incremental cost, SEK (Intervention − SoC)",
+      y = paste0("Incremental cost, ", currency, " (Intervention − SoC)"),
       title = "Cost-effectiveness plane"
     ) +
     theme_bw()
@@ -110,13 +115,131 @@ compute_ceac <- function(psa_res, wtp_grid) {
     ungroup()
 } 
 
-plot_ceac <- function(ceac_tbl) { 
+plot_ceac <- function(ceac_tbl, fx = 10.8, currency = "EUR") {
+  ceac_tbl <- ceac_tbl %>% mutate(wtp = wtp / fx)
   ggplot(ceac_tbl, aes(x = wtp, y = p_ce)) +
     geom_line() +
-    ylim(0, 1) + 
+    ylim(0, 1) +
+    scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
     labs(
-      x = "WTP threshold (SEK per QALY)",
+      x = paste0("WTP threshold (", currency, " per QALY)"),
       y = "Pr(Cost-effective)",
       title = "CEAC"
     ) + theme_bw()
+}
+
+plot_state_membership <- function(state_membership) {
+  # Reshape to long format for plotting
+  plot_data <- state_membership %>%
+    pivot_longer(
+      cols = -Cycle,
+      names_to = c("state", "arm"),
+      names_pattern = "(.+)_(SoC|Int)",
+      values_to = "count"
+    ) %>%
+    mutate(
+      arm = factor(arm, levels = c("SoC", "Int"), labels = c("Standard of Care", "Intervention")),
+      state = factor(state, levels = c("Event_free", "MI", "Post_MI", "Dead"),
+                     labels = c("Event-free", "MI", "Post-MI", "Dead"))
+    )
+
+  ggplot(plot_data, aes(x = Cycle, y = count, color = state, linetype = arm)) +
+    geom_line(linewidth = 0.9) +
+    scale_color_manual(
+      values = c("Event-free" = "#2166AC", "MI" = "#D6604D", "Post-MI" = "#F4A582", "Dead" = "#4D4D4D"),
+      name = "State"
+    ) +
+    scale_linetype_manual(
+      values = c("Standard of Care" = "solid", "Intervention" = "dashed"),
+      name = "Arm"
+    ) +
+    scale_x_continuous(breaks = seq(0, max(state_membership$Cycle), by = 5)) +
+    labs(
+      x = "Cycle (years)",
+      y = "Number of persons",
+      title = "State membership over time"
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom",
+      legend.box = "horizontal"
+    ) +
+    guides(
+      color = guide_legend(order = 1),
+      linetype = guide_legend(order = 2)
+    )
+}
+
+plot_state_membership_faceted <- function(state_membership) {
+  # Reshape to long format for plotting
+  plot_data <- state_membership %>%
+    pivot_longer(
+      cols = -Cycle,
+      names_to = c("state", "arm"),
+      names_pattern = "(.+)_(SoC|Int)",
+      values_to = "count"
+    ) %>%
+    mutate(
+      arm = factor(arm, levels = c("SoC", "Int"), labels = c("Standard of Care", "Intervention")),
+      state = factor(state, levels = c("Event_free", "MI", "Post_MI", "Dead"),
+                     labels = c("Event-free", "MI", "Post-MI", "Dead"))
+    )
+
+  ggplot(plot_data, aes(x = Cycle, y = count, color = state)) +
+    geom_line(linewidth = 1) +
+    facet_wrap(~ arm) +
+    scale_color_manual(
+      values = c("Event-free" = "#2166AC", "MI" = "#D6604D", "Post-MI" = "#F4A582", "Dead" = "#4D4D4D"),
+      name = "State"
+    ) +
+    scale_x_continuous(breaks = seq(0, max(state_membership$Cycle), by = 5)) +
+    labs(
+      x = "Cycle (years)",
+      y = "Number of persons",
+      title = "State membership over time"
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom",
+      strip.background = element_rect(fill = "grey90"),
+      strip.text = element_text(face = "bold")
+    )
+}
+
+plot_state_membership_diff <- function(state_membership) {
+  # Calculate differences (Intervention - SoC)
+  diff_data <- state_membership %>%
+    transmute(
+      Cycle,
+      `Event-free` = Event_free_Int - Event_free_SoC,
+      MI = MI_Int - MI_SoC,
+      `Post-MI` = Post_MI_Int - Post_MI_SoC,
+      Dead = Dead_Int - Dead_SoC
+    ) %>%
+    pivot_longer(
+      cols = -Cycle,
+      names_to = "state",
+      values_to = "difference"
+    ) %>%
+    mutate(
+      state = factor(state, levels = c("Event-free", "MI", "Post-MI", "Dead"))
+    )
+
+  ggplot(diff_data, aes(x = Cycle, y = difference, color = state)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+    geom_line(linewidth = 1) +
+    scale_color_manual(
+      values = c("Event-free" = "#2166AC", "MI" = "#D6604D", "Post-MI" = "#F4A582", "Dead" = "#4D4D4D"),
+      name = "State"
+    ) +
+    scale_x_continuous(breaks = seq(0, max(state_membership$Cycle), by = 5)) +
+    labs(
+      x = "Cycle (years)",
+      y = "Difference in persons (Intervention - SoC)",
+      title = "Difference in state membership over time"
+    ) +
+    theme_bw() +
+    theme(
+      legend.position = "bottom"
+    )
 }
