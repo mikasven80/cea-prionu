@@ -23,7 +23,7 @@ build_and_run_soc <- function(cfg, tables) {
   state_MI   <- define_state(cost = cfg$c_MI,      utility = u_MI,     ly = 1)
   state_PM   <- define_state(cost = cfg$c_PostMI,  utility = u_PostMI, ly = 1)
   state_dead <- define_state(cost = 0,             utility = 0,        ly = 0)
-  
+
   mat_soc <- define_transition(
     state_names = c("Event_free", "MI", "Post_MI", "Dead"),
     p_EF_EF, p_EF_MI, 0,       p_EF_D,
@@ -92,7 +92,7 @@ build_and_run_intervention <- function(cfg, tables) {
   state_EF_noTx <- define_state(cost = 0 + c_program,                  utility = u_EF,     ly = 1)
   state_EF_Tx   <- define_state(cost = cfg$c_tx_annual + c_program,    utility = u_EF,     ly = 1)
   
-  # MI and Post-MI costs same as SoC; no extra tx post-MI
+  # MI and Post-MI costs same as SoC; c_PostMI already includes drug treatment costs
   state_MI      <- define_state(cost = cfg$c_MI,      utility = u_MI,     ly = 1)
   state_PM      <- define_state(cost = cfg$c_PostMI,  utility = u_PostMI, ly = 1)
   state_dead    <- define_state(cost = 0,             utility = 0,        ly = 0)

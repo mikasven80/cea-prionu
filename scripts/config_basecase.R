@@ -6,6 +6,10 @@ get_config_basecase <- function() {
     cohort_size = 1000,
     disc        = 0.03,
 
+    # Currency display (model computes in SEK; figures shown in EUR)
+    fx_sek_per_eur = 10.8,
+    currency_label = "EUR",
+
     # Input paths
     xlsx_path = "data/transitions_soc.xlsx",
     
