@@ -17,7 +17,9 @@ draw_psa_parameters <- function(cfg_psa) {
     p_attendCT = rbeta_mean_sd(n, cfg_psa$p_attendCT_mean, cfg_psa$p_attendCT_sd),
     p_cac100   = rbeta_mean_sd(n, cfg_psa$p_cac100_mean, cfg_psa$p_cac100_sd),
     
-    p_incidental = rbeta_mean_sd(n, cfg_psa$p_incidental_mean, cfg_psa$p_incidental_sd)
+    p_incidental = rbeta_mean_sd(n, cfg_psa$p_incidental_mean, cfg_psa$p_incidental_sd),
+
+    cac100_risk_mult = rlnorm_from_mean_sd(n, cfg_psa$cac100_mult_mean, cfg_psa$cac100_mult_sd)
   )
 }
 
@@ -46,6 +48,7 @@ run_psa <- function(cfg, tables, disc_tbl) {
     cfg_i$p_attendCT <- draws$p_attendCT[i]
     cfg_i$p_cac100   <- draws$p_cac100[i]
     cfg_i$p_incidental <- draws$p_incidental[i]
+    cfg_i$cac100_risk_mult <- draws$cac100_risk_mult[i]
     
     out_i <- tryCatch({
       soc  <- build_and_run_soc(cfg_i, tables)

@@ -4,15 +4,16 @@ get_dsa_params <- function(cfg) {
     list(name = "HR_tx", label = "Hazard ratio (treatment)", base = cfg$HR_tx),
     list(name = "c_MI", label = "MI event cost", base = cfg$c_MI),
     list(name = "c_PostMI", label = "Post-MI annual cost", base = cfg$c_PostMI),
-    list(name = "c_tx_annual", label = "Annual statin treatment cost", base = cfg$c_tx_annual),
+    list(name = "c_tx_annual", label = "Annual lipid-lowering therapy cost", base = cfg$c_tx_annual),
     list(name = "c_survey_per_person", label = "Survey cost per person", base = cfg$c_survey_per_person),
     list(name = "c_ct", label = "CT scan cost", base = cfg$c_ct),
     list(name = "c_incidental_follow", label = "Incidental finding follow-up cost", base = cfg$c_incidental_follow),
     list(name = "p_resp", label = "Survey response rate", base = cfg$p_resp),
     list(name = "p_highrisk", label = "Proportion high-risk", base = cfg$p_highrisk),
     list(name = "p_attendCT", label = "CT attendance rate", base = cfg$p_attendCT),
-    list(name = "p_cac100", label = "Proportion CAC>100", base = cfg$p_cac100),
-    list(name = "p_incidental", label = "Incidental finding rate", base = cfg$p_incidental)
+    list(name = "p_cac100", label = "Proportion with CAC \u2265100", base = cfg$p_cac100),
+    list(name = "p_incidental", label = "Incidental finding rate", base = cfg$p_incidental),
+    list(name = "cac100_risk_mult", label = "MI risk multiplier, CAC \u2265100", base = cfg$cac100_risk_mult)
   )
 }
 

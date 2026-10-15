@@ -38,15 +38,16 @@ plot_ce_plane <- function(psa_res, wtp = 500000, level = 0.95, n_ellipse = 200,
   )
   
   wtp_label <- paste0(
-    "Cost-Effectiveness Threshold\n(",
+    "Cost-effectiveness threshold\n(",
     formatC(wtp, format = "f", big.mark = ",", digits = 0),
     " ", currency, " per QALY)"
   )
   
-  # Ellipse label positioning (tune ell_lab_offset)
-  idx_right <- which.max(ellipse_df$inc_qaly)
-  x_ell_lab <- ellipse_df$inc_qaly[idx_right] + ell_lab_offset * x_max
-  y_ell_lab <- ellipse_df$inc_cost[idx_right] + ell_lab_offset * y_max
+  # Ellipse label positioning: centred just above the top of the ellipse, so the
+  # (long) label stays inside the panel instead of running off the right edge
+  idx_top   <- which.max(ellipse_df$inc_cost)
+  x_ell_lab <- ellipse_df$inc_qaly[idx_top]
+  y_ell_lab <- ellipse_df$inc_cost[idx_top] + ell_lab_offset * y_max
   
   ggplot(psa_res, aes(x = inc_qaly, y = inc_cost)) +
     geom_point(alpha = 0.25, size = 0.8) +
@@ -90,8 +91,8 @@ plot_ce_plane <- function(psa_res, wtp = 500000, level = 0.95, n_ellipse = 200,
     annotate(
       "label",
       x = x_ell_lab, y = y_ell_lab,
-      label = "95% CI",
-      hjust = 0, vjust = 0,
+      label = "95% confidence ellipse",
+      hjust = 0.5, vjust = 0,
       size = 3.6,
       fontface = "bold",
       fill = "white"
@@ -122,9 +123,9 @@ plot_ceac <- function(ceac_tbl, fx = 10.8, currency = "EUR") {
     ylim(0, 1) +
     scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
     labs(
-      x = paste0("WTP threshold (", currency, " per QALY)"),
-      y = "Pr(Cost-effective)",
-      title = "CEAC"
+      x = paste0("Cost-effectiveness threshold (", currency, " per QALY)"),
+      y = "Estimated probability cost-effective",
+      title = "Cost-effectiveness acceptability curve"
     ) + theme_bw()
 }
 

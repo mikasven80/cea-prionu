@@ -21,3 +21,12 @@ good example*.pdf
 
 # Raw / potentially sensitive source data (keep local)
 data/DeSO_slides_PriNu.pptx
+
+# Presentations (kept outside the repo)
+presentations/
+
+# Revision working notes (contain unpublished co-author data)
+REVISION_NOTES.md
+
+# Submission documents - manuscript, supplement, response to referees, cover letter
+submissions/

@@ -91,3 +91,24 @@ calculate_icer <- function(inc_cost, inc_qaly, tol = 1e-6) {
 
   icer
 }
+
+# ---- Calibrating the CAC >=100 hazard multiplier ----
+# Returns the multiplier on the event-free -> MI hazard that reproduces a target
+# cumulative first-MI risk over `years` from `age_start`, accounting for
+# competing mortality.
+lambda_from_target_risk <- function(trans_tbl, age_start, years, target) {
+  ages <- age_start:(age_start + years - 1)
+  idx  <- match(ages, trans_tbl$age)
+  stopifnot(!any(is.na(idx)))
+  p_mi <- trans_tbl$p_EF_MI[idx]; p_d <- trans_tbl$p_EF_D[idx]
+  risk <- function(lam) {
+    S <- 1; cum <- 0
+    for (i in seq_along(p_mi)) {
+      p <- rate_to_p(p_to_rate(p_mi[i]) * lam)
+      cum <- cum + S * p
+      S <- S * (1 - p - p_d[i])
+    }
+    cum
+  }
+  uniroot(function(l) risk(l) - target, c(0.05, 20))$root
+}

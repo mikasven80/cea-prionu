@@ -30,7 +30,9 @@ source("scripts/psa.R")
 source("scripts/dsa.R")
 source("scripts/plots.R")
 source("scripts/export.R")
+source("scripts/scenarios.R")
 source("scripts/subgroup_analysis.R")
+source("scripts/equity_analysis.R")
 
 #-----------------------------
 # 1) Load config + inputs
@@ -73,6 +75,14 @@ cost_per_cycle <- bind_rows(cost_cycle_soc, cost_cycle_int) %>%
 # State membership table (cycle on horizontal, states on vertical for both arms)
 state_membership <- extract_state_membership(res_soc, res_int, cfg$cohort_size)
 
+# Cost disaggregation per person, in EUR (reviewer 2, comment 6)
+cost_components <- bind_rows(
+  extract_cost_components(res_soc, "Standard of care", disc_tbl, cfg$cohort_size, cfg$fx_sek_per_eur),
+  extract_cost_components(res_int, "PRIO-Now",         disc_tbl, cfg$cohort_size, cfg$fx_sek_per_eur)
+) %>% tidyr::pivot_wider(names_from = strategy, values_from = cost_pp) %>%
+  mutate(Incremental = `PRIO-Now` - `Standard of care`)
+print(cost_components)
+
 #-----------------------------
 # 3) DSA (One-way sensitivity analysis)
 #-----------------------------
@@ -82,13 +92,19 @@ p_tornado <- plot_tornado(dsa_res)
 
 # HR threshold analysis
 hr_icer_tbl <- run_hr_threshold_analysis(cfg, tables, disc_tbl,
-                                          hr_range = seq(0.3, 0.7, by = 0.02))
+                                          hr_range = seq(0.30, 0.95, by = 0.01))
 threshold_hr <- find_threshold_hr(hr_icer_tbl, target_icer = 500000)
 message("Threshold HR for ICER = 500,000: ", round(threshold_hr, 4))
 p_hr_icer <- plot_hr_vs_icer(hr_icer_tbl, target_icer = 500000, base_hr = cfg$HR_tx)
 
 #-----------------------------
-# 4) PSA
+# 4) Scenario analyses (observed funnel; treatment uptake)
+#-----------------------------
+scenario_res <- run_scenario_analysis(cfg, tables, disc_tbl)
+print(scenario_res)
+
+#-----------------------------
+# 5) PSA
 #-----------------------------
 psa_res <- run_psa(cfg, tables, disc_tbl)
 
@@ -104,7 +120,7 @@ p_states_facet <- plot_state_membership_faceted(state_membership)
 p_states_diff  <- plot_state_membership_diff(state_membership)
 
 #-----------------------------
-# 5) Export outputs
+# 6) Export outputs
 #-----------------------------
 export_xlsx(
   named_sheets = list(
@@ -112,8 +128,10 @@ export_xlsx(
     Deterministic_ICER    = det_icer,
     Cost_per_cycle        = cost_per_cycle,
     State_membership      = state_membership,
+    Cost_components       = cost_components,
     DSA_Results           = dsa_summary,
     HR_threshold_analysis = hr_icer_tbl,
+    Scenario_Analyses     = scenario_res,
     PSA_draws_and_outcomes = psa_res,
     CEAC = ceac_tbl
   ),
@@ -124,6 +142,13 @@ save_plot_png(p_tornado,      "outputs/Tornado_DSA.png", width = 10, height = 7)
 save_plot_png(p_hr_icer,      "outputs/HR_vs_ICER.png", width = 8, height = 6)
 save_plot_png(p_ceplane,      "outputs/CE_plane.png", width = 8, height = 6)
 save_plot_png(p_ceac,         "outputs/CEAC.png",     width = 8, height = 6)
+
+# Submission figures: 600 dpi PNG (+ vector where available) in outputs/figures/
+save_figure(p_tornado,     "fig2",  width = 10, height = 7)
+save_figure(p_ceplane,     "fig3",  width = 8,  height = 6)
+save_figure(p_ceac,        "figs1", width = 8,  height = 6)
+save_figure(p_hr_icer,     "figs2", width = 8,  height = 6)
+save_figure(p_states_diff, "figs3", width = 10, height = 5)
 save_plot_png(p_states,       "outputs/State_membership.png", width = 10, height = 6)
 save_plot_png(p_states_facet, "outputs/State_membership_faceted.png", width = 10, height = 5)
 save_plot_png(p_states_diff,  "outputs/State_membership_diff.png", width = 10, height = 5)
@@ -137,6 +162,7 @@ saveRDS(
     res_soc = res_soc,
     res_int = res_int,
     dsa_res = dsa_res,
+    scenario_res = scenario_res,
     psa_res = psa_res,
     ceac_tbl = ceac_tbl
   ),
@@ -144,7 +170,7 @@ saveRDS(
 )
 
 #-----------------------------
-# 6) Subgroup analysis (socioeconomic areas)
+# 7) Subgroup analysis (socioeconomic areas)
 #-----------------------------
 subgroup_xlsx <- "data/subgroup funnel.xlsx"
 if (file.exists(subgroup_xlsx)) {
@@ -156,6 +182,24 @@ if (file.exists(subgroup_xlsx)) {
   message("Subgroup results written to outputs/PrioNU_Subgroup_Results.xlsx")
 } else {
   message("Subgroup file not found at ", subgroup_xlsx, " -- skipping subgroup analysis.")
+}
+
+#-----------------------------
+# 8) Equity analysis (participation gradients by socioeconomic area)
+#-----------------------------
+if (file.exists(subgroup_xlsx)) {
+  message("Running equity analysis...")
+  equity_res <- run_equity_analysis(cfg, tables, disc_tbl, subgroup_xlsx)
+  print(as.data.frame(equity_res$by_group), row.names = FALSE)
+  print(as.data.frame(equity_res$decomposition), row.names = FALSE)
+  print(as.data.frame(equity_res$gaps), row.names = FALSE)
+  write_xlsx(list(By_Group      = equity_res$by_group,
+                  Decomposition = equity_res$decomposition,
+                  Headline_Gaps = equity_res$gaps),
+             path = "outputs/PrioNU_Equity_Results.xlsx")
+  message("Equity results written to outputs/PrioNU_Equity_Results.xlsx")
+} else {
+  message("Subgroup file not found at ", subgroup_xlsx, " -- skipping equity analysis.")
 }
 
 message("Done. Outputs written to outputs/ folder.")

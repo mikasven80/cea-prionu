@@ -118,8 +118,8 @@ plot_decision_tree <- function() {
               "Conducts test",      "Does not test",
               "High-risk",          "Not high-risk",
               "Shows up for CT",    "No-show for CT",
-              "CAC > threshold",    "CAC < threshold",
-              "Initiates treatment","Rejects treatment",
+              "CAC \u2265100",          "CAC <100",
+              "Initiates LLT",      "Declines LLT",
               "High-risk",          "Not high-risk"),
     vjust = rep(c(0, 1), 7),
     stringsAsFactors = FALSE
@@ -159,7 +159,7 @@ plot_markov_model <- function() {
 
   # State positions
   states <- data.frame(
-    label = c("Event-free", "MI", "Post-MI", "Death"),
+    label = c("Event-free", "MI", "Post-MI", "Dead"),
     cx    = c(0.25, 0.75, 0.25, 0.75),
     cy    = c(0.70, 0.70, 0.30, 0.30),
     stringsAsFactors = FALSE
@@ -214,7 +214,9 @@ plot_markov_model <- function() {
 # ── Combined Figure ─────────────────────────────────────────────────
 
 plot_model_structure <- function(filename = "outputs/Figure_Model_Structure.png",
-                                 width = 10, height = 11, dpi = 300) {
+                                 width = 10, height = 11, dpi = 600,
+                                 submission_dir = "outputs/figures",
+                                 submission_basename = "fig1") {
   if (!requireNamespace("patchwork", quietly = TRUE))
     stop("Install patchwork: install.packages('patchwork')")
 
@@ -229,5 +231,13 @@ plot_model_structure <- function(filename = "outputs/Figure_Model_Structure.png"
   ggsave(filename, combined, width = width, height = height, dpi = dpi,
          bg = "white")
   message("Saved: ", filename)
+
+  # Submission copies: 600 dpi PNG plus a vector file where possible
+  if (!is.null(submission_dir)) {
+    if (!exists("save_figure")) source("scripts/export.R")
+    save_figure(combined, submission_basename, width = width, height = height,
+                dpi = dpi, dir = submission_dir)
+  }
+
   invisible(combined)
 }
