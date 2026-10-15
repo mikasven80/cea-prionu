@@ -63,10 +63,11 @@ If you use this software, please cite it using the metadata in
 [`CITATION.cff`](CITATION.cff), or:
 
 > Svensson, M. (2026). *PRIO-Now CEA: Cost-effectiveness model of two-staged
-> CAC-guided statin screening in Sweden* (v1.0.0). Zenodo.
+> CAC-guided statin screening in Sweden* (v2.0.0). Zenodo.
 > https://doi.org/10.5281/zenodo.20447940
 
-- Concept DOI (all versions): [10.5281/zenodo.20447940](https://doi.org/10.5281/zenodo.20447940)
+- Concept DOI (all versions, resolves to the latest): [10.5281/zenodo.20447940](https://doi.org/10.5281/zenodo.20447940)
+- Version DOI (v2.0.0): [10.5281/zenodo.23403069](https://doi.org/10.5281/zenodo.23403069)
 - Version DOI (v1.0.0): [10.5281/zenodo.20447941](https://doi.org/10.5281/zenodo.20447941)
 
 ## License
